@@ -58,10 +58,21 @@ vim.keymap.set({ "n", "i" }, "<Enter>", function()
 	vim.api.nvim_set_current_line("")
 end, { buffer = M.question_input.bufnr })
 
+function M.full_ask_question(question)
+	local response = LLM.ask(question)
+	Util.display_question(M.answer_popup.bufnr, question)
+	Util.display_answer(M.answer_popup.bufnr, response)
+end
+
 M.question_input:map("n", "<Esc>", function()
 	M.layout:unmount()
 	M.is_displaying_w = false
 end, { noremap = true })
+
+function M.force_show_chat_window()
+	M.layout:mount()()
+	M.is_displaying_w = true
+end
 
 function M.toggle_chat_window()
 	if M.is_displaying_w then
