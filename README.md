@@ -13,3 +13,11 @@ Leader+h+c -> Open chat window
 Leader+h+e -> Ask chatgpt to explain selected codeblock (requires visual mode)
 
 All chatgpt requests rely on the `OPENAI_API_KEY` env var being set.
+
+## Dependencies
+
+Relies on:
+
+- curl
+- [nui.nvim](https://github.com/MunifTanjim/nui.nvim/tree/main)
+- [plenary.nvim](https://github.com/nvim-lua/plenary.nvim/)
