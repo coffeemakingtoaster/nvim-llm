@@ -2,40 +2,78 @@ local Curl = require("plenary.curl")
 
 local M = {}
 
-function M.do_request(question)
-	local api_key = os.getenv("OPENAI_API_KEY")
+local conversations = {}
 
-	if not api_key then
-		print(api_key)
-		return "No API Key Set -> AI cannot answer"
+local function build_prompt(history)
+	local prompt = ""
+	for _, msg in ipairs(history) do
+		if msg.role == "user" then
+			prompt = prompt .. "User: " .. msg.content .. "\n"
+		else
+			prompt = prompt .. "Assistant: " .. msg.content .. "\n"
+		end
+	end
+	prompt = prompt .. "Assistant: "
+	return prompt
+end
+
+function M.get_new_session()
+	local res = ""
+	for i = 1, 64 do
+		res = res .. string.char(math.random(97, 122))
+	end
+	return res
+end
+
+function M.get_session_name(session_id)
+	if not conversations[session_id] then
+		print("Could not summarize unknown session id")
+		return ""
 	end
 
-	local body = vim.fn.json_encode({
-		model = "gpt-3.5-turbo",
-		messages = {
-			{ role = "user", content = question },
-		},
-	})
+	local prompt = build_prompt(conversations[session_id])
 
-	local response = Curl.post("https://api.openai.com/v1/chat/completions", {
+	local answer, _ = M.do_request(
+		prompt
+			.. "Please summarize the topic of our conversation in 3 words. Answer only with these 3 words and nothing else",
+		""
+	)
+	return answer
+end
+
+function M.do_request(question, session_id)
+	if string.len(session_id) == 0 then
+		session_id = M.get_new_session()
+	end
+	conversations[session_id] = conversations[session_id] or {}
+	table.insert(conversations[session_id], { role = "user", content = question })
+
+	local prompt = build_prompt(conversations[session_id])
+
+	local response = Curl.post("http://localhost:11434/api/generate", {
 		headers = {
 			["Content-Type"] = "application/json",
-			["Authorization"] = "Bearer " .. api_key,
 		},
-		body = body,
+		body = vim.fn.json_encode({
+			model = "llama3",
+			prompt = prompt,
+			stream = false,
+		}),
+		timeout = "60000", -- 60 seconds because local llms may take a while
 	})
 
 	if response.status ~= 200 then
-		error("OpenAI API request failed with status " .. response.status .. ": " .. response.body)
+		error("Ollama API request failed with status " .. response.status .. ": " .. response.body)
 	end
 
 	local data = vim.fn.json_decode(response.body)
-	local answer = data.choices and data.choices[1] and data.choices[1].message and data.choices[1].message.content
+	local answer = data.response
 	if not answer then
-		error("Unexpected response format from OpenAI API")
+		error("Unexpected response format from Ollama API")
 	end
 
-	return vim.trim(answer)
+	table.insert(conversations[session_id], { role = "assistant", content = answer })
+	return vim.trim(answer), session_id
 end
 
 return M

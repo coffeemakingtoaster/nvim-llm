@@ -31,6 +31,9 @@ local function display_chat_message(bufferId, message, participant, color)
 		0, -- start at beginning
 		#participant -- highlight only the user part (excluding ":")
 	)
+	-- local last_appended_line = line_count + #lines_to_append - 1
+	-- vim.api.nvim_win_set_cursor(0, { vim.api.nvim_buf_line_count(bufferId) - 1, 0 })
+	--vim.cmd("normal! G")
 end
 
 function M.display_answer(bufferId, text)

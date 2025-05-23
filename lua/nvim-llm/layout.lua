@@ -38,21 +38,29 @@ M.layout = Layout(
 	{
 		position = "50%",
 		size = {
-			width = 80,
+			width = 150,
 			height = 40,
 		},
 	},
 	Layout.Box({
 		Layout.Box(M.answer_popup, { size = "90%" }),
-		Layout.Box(M.question_input, { size = "10%" }),
+		Layout.Box(M.question_input, { size = {
+			height = "10%",
+		} }),
 	}, { dir = "col" })
 )
 
 vim.keymap.set({ "n", "i" }, "<Enter>", function()
 	local value = string.sub(vim.api.nvim_get_current_line(), vim.fn.strwidth(prompt) + 1)
-	local response = LLM.ask(value)
+	local response, summary = LLM.ask(value)
 	Util.display_question(M.answer_popup.bufnr, value)
 	Util.display_answer(M.answer_popup.bufnr, response)
+
+	M.answer_popup.border:set_text("top", summary, "center")
+
+	vim.api.nvim_win_call(M.answer_popup.winid, function()
+		vim.cmd("normal! G")
+	end)
 
 	-- clear input field
 	vim.api.nvim_set_current_line("")
