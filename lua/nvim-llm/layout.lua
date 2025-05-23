@@ -2,19 +2,22 @@ local M = {}
 local Layout = require("nui.layout")
 local Popup = require("nui.popup")
 local Input = require("nui.input")
+local Menu = require("nui.menu")
 local LLM = require("nvim-llm.llm")
 local Util = require("nvim-llm.utils")
 local prompt = "> "
 
 M.is_displaying_w = false
+
+-- Answer popup
 M.answer_popup = Popup({
 	border = {
 		style = "single",
-		text = {
-			top = "nvim-llm",
-		},
+		text = { top = "nvim-llm" },
 	},
 })
+
+-- Question input
 M.question_input = Input({
 	border = {
 		style = "single",
@@ -27,13 +30,26 @@ M.question_input = Input({
 		winhighlight = "Normal:Normal,FloatBorder:Normal",
 	},
 }, {
-	prompt = prompt,
+	prompt = "> ",
 	default_value = "",
 	on_submit = function(value)
 		print("Input Submitted: " .. value)
 	end,
 })
 
+-- Chat selection popup
+M.chat_selection = Popup({
+	border = {
+		style = "single",
+		text = { top = "Chats" },
+	},
+	buf_options = {
+		modifiable = false,
+		readonly = true,
+	},
+})
+
+-- Layout with chat selection on the right
 M.layout = Layout(
 	{
 		position = "50%",
@@ -43,12 +59,34 @@ M.layout = Layout(
 		},
 	},
 	Layout.Box({
-		Layout.Box(M.answer_popup, { size = "90%" }),
-		Layout.Box(M.question_input, { size = {
-			height = "10%",
-		} }),
-	}, { dir = "col" })
+		-- Left column: chat + input
+		Layout.Box({
+			Layout.Box(M.answer_popup, { size = "90%" }),
+			Layout.Box(M.question_input, { size = { height = "10%" } }),
+		}, { dir = "col", size = "80%" }),
+
+		-- Right column: chat selection
+		Layout.Box(M.chat_selection, { size = "20%" }),
+	}, { dir = "row" })
 )
+
+-- Function to update chat selection list
+function M.update_chat_selection(chat_list)
+	local lines = {}
+	for _, chat in ipairs(chat_list) do
+		table.insert(lines, chat)
+	end
+
+	local bufnr = M.chat_selection.bufnr
+	vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
+	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+	vim.api.nvim_buf_clear_namespace(bufnr, -1, 0, -1)
+
+	-- Apply highlight to the first line
+	vim.api.nvim_buf_add_highlight(bufnr, -1, "answerpurple", 0, 0, -1)
+
+	vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
+end
 
 vim.keymap.set({ "n", "i" }, "<Enter>", function()
 	local value = string.sub(vim.api.nvim_get_current_line(), vim.fn.strwidth(prompt) + 1)
@@ -64,6 +102,8 @@ vim.keymap.set({ "n", "i" }, "<Enter>", function()
 
 	-- clear input field
 	vim.api.nvim_set_current_line("")
+
+	M.update_chat_selection({ summary })
 end, { buffer = M.question_input.bufnr })
 
 function M.full_ask_question(question)
