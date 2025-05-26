@@ -3,6 +3,7 @@ local Layout = require("nui.layout")
 local Popup = require("nui.popup")
 local Input = require("nui.input")
 local Menu = require("nui.menu")
+local event = require("nui.utils.autocmd").event
 local LLM = require("nvim-llm.llm")
 local Util = require("nvim-llm.utils")
 local prompt = "> "
@@ -130,6 +131,47 @@ function M.toggle_chat_window()
 		M.layout:mount()
 		M.is_displaying_w = true
 	end
+end
+
+function M.refactor()
+	-- hide chat
+	if M.is_displaying_w then
+		M.toggle_chat_window()
+	end
+	local selection_position, selection_content = Util.capture_visual_selection()
+	local input = Input({
+		position = "50%",
+		size = {
+			width = "50%",
+		},
+		border = {
+			style = "single",
+			text = {
+				top = "Refactor prompt",
+				top_align = "center",
+			},
+		},
+		win_options = {
+			winhighlight = "Normal:Normal,FloatBorder:Normal",
+		},
+	}, {
+		prompt = "> ",
+		default_value = "",
+		on_close = function()
+			print("Input Closed!")
+		end,
+		on_submit = function(value)
+			local answer = LLM.refactor(value, selection_content)
+			Util.replace_range(selection_position, answer)
+			print("Refactor done")
+		end,
+	})
+	input:mount()
+
+	-- unmount component when cursor leaves buffer
+	input:on(event.BufLeave, function()
+		input:unmount()
+	end)
 end
 
 return M

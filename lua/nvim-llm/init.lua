@@ -29,6 +29,15 @@ function M.setup(opts)
 		layout.toggle_chat_window()
 		layout.full_ask_question(Util.format_explain_question(selection))
 	end)
+
+	vim.keymap.set("v", "<Leader>hr", function()
+		local selection = get_selected_text()
+		if #selection == 0 then
+			print("Cannot refactor emtpy selectoin")
+			return
+		end
+		layout.refactor()
+	end)
 end
 
 return M
