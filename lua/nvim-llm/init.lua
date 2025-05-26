@@ -15,9 +15,7 @@ local function get_selected_text()
 end
 
 function M.setup(opts)
-	vim.keymap.set("n", "<Leader>hc", function()
-		layout.toggle_chat_window()
-	end)
+	vim.keymap.set("n", "<Leader>hc", layout.toggle_chat_window, { desc = "[H]elp from llama in [C]hat" })
 
 	-- this only works in visual mode
 	vim.keymap.set("v", "<Leader>he", function()
@@ -28,7 +26,7 @@ function M.setup(opts)
 		end
 		layout.toggle_chat_window()
 		layout.full_ask_question(Util.format_explain_question(selection))
-	end)
+	end, { desc = "[H]elp from llama to [E]xplain the current selection" })
 
 	vim.keymap.set("v", "<Leader>hr", function()
 		local selection = get_selected_text()
@@ -37,7 +35,7 @@ function M.setup(opts)
 			return
 		end
 		layout.refactor()
-	end)
+	end, { desc = "[H]elp from llama by [R]efactoring current selection" })
 end
 
 return M

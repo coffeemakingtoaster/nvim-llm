@@ -2,10 +2,10 @@ local M = {}
 local Layout = require("nui.layout")
 local Popup = require("nui.popup")
 local Input = require("nui.input")
-local Menu = require("nui.menu")
 local event = require("nui.utils.autocmd").event
 local LLM = require("nvim-llm.llm")
 local Util = require("nvim-llm.utils")
+local sessions = require("nvim-llm.llm.sessions")
 local prompt = "> "
 
 M.is_displaying_w = false
@@ -74,8 +74,13 @@ M.layout = Layout(
 -- Function to update chat selection list
 function M.update_chat_selection(chat_list)
 	local lines = {}
-	for _, chat in ipairs(chat_list) do
-		table.insert(lines, chat)
+	local active_index = nil
+
+	for i, chat in ipairs(chat_list) do
+		table.insert(lines, chat.name)
+		if chat.is_active then
+			active_index = i - 1 -- 0-based index for nvim_buf_add_highlight
+		end
 	end
 
 	local bufnr = M.chat_selection.bufnr
@@ -83,15 +88,19 @@ function M.update_chat_selection(chat_list)
 	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
 	vim.api.nvim_buf_clear_namespace(bufnr, -1, 0, -1)
 
-	-- Apply highlight to the first line
-	vim.api.nvim_buf_add_highlight(bufnr, -1, "answerpurple", 0, 0, -1)
+	if active_index then
+		vim.api.nvim_buf_add_highlight(bufnr, -1, "answerpurple", active_index, 0, -1)
+	end
 
 	vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
 end
 
+-- Run once to ensure populated side panel
+M.update_chat_selection(sessions.get_session_list())
+
 vim.keymap.set({ "n", "i" }, "<Enter>", function()
 	local value = string.sub(vim.api.nvim_get_current_line(), vim.fn.strwidth(prompt) + 1)
-	local response, summary = LLM.ask(value)
+	local response, summary = LLM.ask(value, sessions.get_active())
 	Util.display_question(M.answer_popup.bufnr, value)
 	Util.display_answer(M.answer_popup.bufnr, response)
 
@@ -104,8 +113,14 @@ vim.keymap.set({ "n", "i" }, "<Enter>", function()
 	-- clear input field
 	vim.api.nvim_set_current_line("")
 
-	M.update_chat_selection({ summary })
+	M.update_chat_selection(sessions.get_session_list())
 end, { buffer = M.question_input.bufnr })
+
+vim.keymap.set({ "n" }, "<Leader>hn", function()
+	LLM.start_new_ask_session()
+	M.update_chat_selection(sessions.get_session_list())
+	print(sessions.get_session_list())
+end, { desc = "[H]elp from llama in [N]ew chat" })
 
 function M.full_ask_question(question)
 	local response = LLM.ask(question)
@@ -129,6 +144,8 @@ function M.toggle_chat_window()
 		M.layout:hide()
 	else
 		M.layout:mount()
+		LLM.start_new_ask_session()
+		M.update_chat_selection(sessions.get_session_list())
 		M.is_displaying_w = true
 	end
 end

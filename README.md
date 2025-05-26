@@ -22,5 +22,7 @@ Leader+h+e -> Ask llama to explain selected codeblock (requires visual mode)
 Relies on:
 
 - curl
+- make
+- [ollama](https://ollama.com/)
 - [nui.nvim](https://github.com/MunifTanjim/nui.nvim/tree/main)
 - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim/)
