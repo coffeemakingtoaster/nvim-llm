@@ -97,4 +97,17 @@ function M.replace_range(pos, new_text)
 	end
 end
 
+function M.clear_buffer(buffer_id)
+	vim.api.nvim_buf_set_lines(buffer_id, 0, -1, false, {})
+end
+
+function M.write_full_conversation(buffer_id, conversation)
+	for _, v in ipairs(conversation) do
+		if v.role == "assistant" then
+			M.display_answer(buffer_id, v.content)
+		else
+			M.display_question(buffer_id, v.content)
+		end
+	end
+end
 return M

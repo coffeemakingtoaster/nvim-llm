@@ -21,8 +21,8 @@ function M.ask(question, session_id)
 	end
 	sessions.append_session_content(session_id, "user", question)
 	local answer = Requests.do_request(question, sessions.get_session_content(session_id))
-	sessions.append_session_content("assistant", answer)
-	local summary = sessions.get_session_name(session_id)
+	sessions.append_session_content(session_id, "assistant", answer)
+	local summary = sessions.update_session_name(session_id)
 	return answer, summary
 end
 

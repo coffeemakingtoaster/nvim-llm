@@ -8,6 +8,10 @@ M.conversation_names = {}
 M.active_id = nil
 
 function M.get_session_name(session_id)
+	return M.conversation_names[session_id]
+end
+
+function M.update_session_name(session_id)
 	if not M.conversations[session_id] then
 		print("Could not summarize unknown session id")
 		return ""
@@ -56,7 +60,6 @@ end
 
 function M.get_session_list()
 	local res = {}
-	print("Checking")
 	for i in pairs(M.conversation_names) do
 		table.insert(res, { name = M.conversation_names[i], id = i, is_active = i == M.active_id })
 	end

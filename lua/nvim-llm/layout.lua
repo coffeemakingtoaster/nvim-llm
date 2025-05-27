@@ -9,6 +9,7 @@ local sessions = require("nvim-llm.llm.sessions")
 local prompt = "> "
 
 M.is_displaying_w = false
+M.active_index = 0
 
 -- Answer popup
 M.answer_popup = Popup({
@@ -79,6 +80,7 @@ function M.update_chat_selection(chat_list)
 	for i, chat in ipairs(chat_list) do
 		table.insert(lines, chat.name)
 		if chat.is_active then
+			print(chat.name)
 			active_index = i - 1 -- 0-based index for nvim_buf_add_highlight
 		end
 	end
@@ -90,6 +92,7 @@ function M.update_chat_selection(chat_list)
 
 	if active_index then
 		vim.api.nvim_buf_add_highlight(bufnr, -1, "answerpurple", active_index, 0, -1)
+		M.active_index = active_index
 	end
 
 	vim.api.nvim_buf_set_option(bufnr, "modifiable", false)
@@ -118,9 +121,40 @@ end, { buffer = M.question_input.bufnr })
 
 vim.keymap.set({ "n" }, "<Leader>hn", function()
 	LLM.start_new_ask_session()
+	Util.clear_buffer(M.answer_popup.bufnr)
 	M.update_chat_selection(sessions.get_session_list())
 	print(sessions.get_session_list())
+	M.answer_popup.border:set_text("top", "New chat", "center")
 end, { desc = "[H]elp from llama in [N]ew chat" })
+
+vim.keymap.set({ "n" }, "<Leader>hu", function()
+	if M.active_index == 0 then
+		print("Cannot move there, limit reached")
+		return
+	end
+	M.move_to_chat_with_index(M.active_index - 1)
+end, { desc = "[H]elp from llama [U]pper chat" })
+
+vim.keymap.set({ "n" }, "<Leader>hl", function()
+	if M.active_index == #sessions.get_session_list() - 1 then
+		print("Cannot move there, limit reached")
+		return
+	end
+	M.move_to_chat_with_index(M.active_index + 1)
+end, { desc = "[H]elp from llama [L]ower chat" })
+
+function M.move_to_chat_with_index(index)
+	local chat_list = sessions.get_session_list()
+	assert(chat_list ~= nil, "Chat list can be empty but can never be nil")
+	-- +1 because lua start with 1????
+	local new_active_id = chat_list[index + 1].id
+	sessions.set_active(new_active_id)
+	Util.clear_buffer(M.answer_popup.bufnr)
+	Util.write_full_conversation(M.answer_popup.bufnr, sessions.get_session_content(sessions.get_active()))
+	M.update_chat_selection(sessions.get_session_list())
+	local session_name = sessions.get_session_name(sessions.get_active())
+	M.answer_popup.border:set_text("top", session_name, "center")
+end
 
 function M.full_ask_question(question)
 	local response = LLM.ask(question)
