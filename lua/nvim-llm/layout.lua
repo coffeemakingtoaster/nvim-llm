@@ -4,6 +4,7 @@ local Popup = require("nui.popup")
 local Input = require("nui.input")
 local event = require("nui.utils.autocmd").event
 local LLM = require("nvim-llm.llm")
+local Tool = require("nvim-llm.tools")
 local Util = require("nvim-llm.utils")
 local sessions = require("nvim-llm.llm.sessions")
 local prompt = "> "
@@ -126,6 +127,32 @@ vim.keymap.set({ "n" }, "<Leader>hn", function()
 	print(sessions.get_session_list())
 	M.answer_popup.border:set_text("top", "New chat", "center")
 end, { desc = "[H]elp from llama in [N]ew chat" })
+
+function M.new_auto_chat()
+	M.toggle_chat_window()
+	LLM.start_new_ask_session()
+	Util.clear_buffer(M.answer_popup.bufnr)
+	M.update_chat_selection(sessions.get_session_list())
+	print(sessions.get_session_list())
+	M.answer_popup.border:set_text("top", "Auto chat", "center")
+	local question = "I would like you to provide feedback to the current project and its structure. To explore the project and gather information about the structure you have a list of helper functions at your disposal that you can call. Do your own research with the tooling functions!\n"
+		.. Tool.get_doc_string()
+		.. "\n"
+		.. 'You can safely assume that your current location in the file system "." is the root of the project.\n'
+	local count = 1
+	while count < 5 do
+		Util.display_question(M.answer_popup.bufnr, question)
+		local llm_question, finish = LLM.auto_ask(question, sessions.get_active())
+		Util.display_answer(M.answer_popup.bufnr, llm_question)
+		if not finish then
+			question = Tool.call_if_valid(llm_question)
+		else
+			count = 100
+		end
+		count = count + 1
+	end
+	print("Autochat done")
+end
 
 vim.keymap.set({ "n" }, "<Leader>hu", function()
 	if M.active_index == 0 then

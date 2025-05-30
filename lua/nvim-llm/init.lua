@@ -16,6 +16,7 @@ end
 
 function M.setup(opts)
 	vim.keymap.set("n", "<Leader>hc", layout.toggle_chat_window, { desc = "[H]elp from llama in [C]hat" })
+	vim.keymap.set("n", "<Leader>hf", layout.new_auto_chat, { desc = "[H]elp from llama in form of [F]eedback" })
 
 	-- this only works in visual mode
 	vim.keymap.set("v", "<Leader>he", function()
