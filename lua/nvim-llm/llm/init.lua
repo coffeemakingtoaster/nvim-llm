@@ -20,7 +20,7 @@ function M.ask(question, session_id)
 		session_id = sessions.get_active()
 	end
 	sessions.append_session_content(session_id, "user", question)
-	local answer = Requests.do_request(question, sessions.get_session_content(session_id))
+	local answer = Requests.do_request(sessions.get_session_content(session_id))
 	sessions.append_session_content(session_id, "assistant", answer)
 	local summary = sessions.update_session_name(session_id)
 	return answer, summary
@@ -42,7 +42,7 @@ function M.auto_ask(question, session_id)
 	question = question
 		.. "\nAdd the text !DONE! to the very end of your message once your answer is final and you do not intend on calling any more tool functions."
 	sessions.append_session_content(session_id, "user", question)
-	local answer = Requests.do_request(question, sessions.get_session_content(session_id))
+	local answer = Requests.do_request(sessions.get_session_content(session_id))
 	sessions.append_session_content(session_id, "assistant", answer)
 	local done = is_done(answer)
 	-- remove I AM DONE if needed
@@ -53,12 +53,21 @@ function M.auto_ask(question, session_id)
 end
 
 function M.refactor(prompt, currentSection)
-	local fullPrompt = "Refactor the following codeblock according to this prompt: "
+	local fullPrompt = "You will be given tasks and a codeblock.\nPlease refactor the code block according to the given tasks!\nOnly respond in the new and refactored source code, do NOT provide explanation or wrap it in a markdown codeblock!\nTasks:\n-"
 		.. prompt
-		.. " .Only respond in the new and refactored source code, do not provide explanation or wrap it in a markdown codeblock! The source code is:\n"
+		.. "\n\nCode Block:\n```"
 		.. currentSection
-	local answer, _ = Requests.do_request(fullPrompt, {})
-	return answer
+		.. "\n``` Remember: Your response should NOT be wrapped in a markdown code block!"
+	-- put in place session
+	local answer, _ = Requests.do_request({ { role = "user", content = fullPrompt } })
+
+	-- in case the smart llm adds markdown code block syntax even though I asked it not to
+	local content = answer:match("^```(.-)```$") or answer
+
+	content = content:gsub("^%s*\n", "") -- Leading empty lines
+	content = content:gsub("\n%s*$", "") -- Trailing empty lines
+
+	return content
 end
 
 return M

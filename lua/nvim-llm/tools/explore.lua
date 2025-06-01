@@ -4,7 +4,7 @@ M = {}
 local uv = vim.loop
 
 function M.get_doc_string()
-	return '-`get_recursive_dir_structure(path)` returns the directory and file structure recursively for a given path. This accepts relative parts so when unsure you can start with get_recursive_dir_structure(".")\n'
+	return '-`get_recursive_dir_structure(path)` returns the directory and file structure recursively for a given path. This accepts relative paths so when unsure you can start with get_recursive_dir_structure(".")\n'
 end
 
 local function get_rec_dir(path, indent)

@@ -3,7 +3,7 @@ local utils = require("nvim-llm.llm.utils")
 
 local M = {}
 
-function M.do_request(question, conversation)
+function M.do_request(conversation)
 	local prompt = utils.build_prompt(conversation)
 
 	local response = Curl.post("http://localhost:11434/api/generate", {
