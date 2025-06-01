@@ -1,3 +1,4 @@
+local guards = require("nvim-llm.tools.guards")
 M = {}
 
 local uv = vim.loop
@@ -6,16 +7,8 @@ function M.get_doc_string()
 	return '-`get_recursive_dir_structure(path)` returns the directory and file structure recursively for a given path. This accepts relative parts so when unsure you can start with get_recursive_dir_structure(".")\n'
 end
 
-local function is_within_root(given_path)
-	local root = vim.loop.cwd()
-	given_path = vim.fn.fnamemodify(given_path, ":p") -- absolute path
-	root = vim.fn.fnamemodify(root, ":p")
-
-	return given_path:sub(1, #root) == root
-end
-
 local function get_rec_dir(path, indent)
-	if not is_within_root(path) then
+	if not guards.is_within_root(path) then
 		return "Path is outside the current project."
 	end
 	local entries = {}
