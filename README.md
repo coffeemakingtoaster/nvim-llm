@@ -13,9 +13,23 @@ Use `make serve-llama` to serve the model locally.
 
 ## Default keybinds
 
-Leader+h+c -> Open chat window
+### Normal mode
 
-Leader+h+e -> Ask llama to explain selected codeblock (requires visual mode)
+Leader+h+c -> Open chat window
+Leader+h+d -> Provide feedback to the current project (can access file structure and content) _Experimental_
+
+*With open Chat window:*
+
+Leader+h+u -> Move up one conversation in conversation list
+Leader+h+l -> Move up one conversation in conversation list
+Leader+h+n -> Start new conversation
+
+### Visual Mode
+
+Leader+h+e -> Ask llama to explain selected codeblock 
+
+Leader+h+r ->  Ask llama to refactor the selected codeblock based on input (input field to provide instructions opens automatically)
+
 
 ## Dependencies
 

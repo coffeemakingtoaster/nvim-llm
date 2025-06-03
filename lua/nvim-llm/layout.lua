@@ -7,6 +7,7 @@ local LLM = require("nvim-llm.llm")
 local Tool = require("nvim-llm.tools")
 local Util = require("nvim-llm.utils")
 local sessions = require("nvim-llm.llm.sessions")
+local utils = require("nvim-llm.llm.utils")
 local prompt = "> "
 
 M.is_displaying_w = false
@@ -184,7 +185,7 @@ function M.move_to_chat_with_index(index)
 end
 
 function M.full_ask_question(question)
-	local response = LLM.ask(question)
+	local response = LLM.ask(question, utils.get_new_session())
 	Util.display_question(M.answer_popup.bufnr, question)
 	Util.display_answer(M.answer_popup.bufnr, response)
 end
