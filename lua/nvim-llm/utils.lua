@@ -102,6 +102,7 @@ function M.clear_buffer(buffer_id)
 end
 
 function M.write_full_conversation(buffer_id, conversation)
+	assert(conversation ~= nil, "Cannot write a nil conversation")
 	for _, v in ipairs(conversation) do
 		if v.role == "assistant" then
 			M.display_answer(buffer_id, v.content)

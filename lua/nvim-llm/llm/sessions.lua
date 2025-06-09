@@ -58,10 +58,21 @@ function M.get_active()
 	return M.active_id
 end
 
+function M.delete_session(id)
+	assert(id ~= M.active_id, "Cannot delete active session")
+	M.conversation_names[id] = nil
+	M.conversations[id] = nil
+end
+
 function M.get_session_list()
 	local res = {}
-	for i in pairs(M.conversation_names) do
-		table.insert(res, { name = M.conversation_names[i], id = i, is_active = i == M.active_id })
+	for id in pairs(M.conversation_names) do
+		if id ~= M.active_id and M.conversations[id] == nil then
+			goto continue
+		end
+		table.insert(res, { name = M.conversation_names[id], id = id, is_active = id == M.active_id })
+		-- I know gotos are not that smart...but I wanted to use one at least once :)
+		::continue::
 	end
 	return res
 end

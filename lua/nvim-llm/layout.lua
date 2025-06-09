@@ -74,6 +74,9 @@ M.layout = Layout(
 	}, { dir = "row" })
 )
 
+M.layout:mount()
+M.layout:hide()
+
 -- Function to update chat selection list
 function M.update_chat_selection(chat_list)
 	local lines = {}
@@ -82,7 +85,6 @@ function M.update_chat_selection(chat_list)
 	for i, chat in ipairs(chat_list) do
 		table.insert(lines, chat.name)
 		if chat.is_active then
-			print(chat.name)
 			active_index = i - 1 -- 0-based index for nvim_buf_add_highlight
 		end
 	end
@@ -125,7 +127,6 @@ vim.keymap.set({ "n" }, "<Leader>hn", function()
 	LLM.start_new_ask_session()
 	Util.clear_buffer(M.answer_popup.bufnr)
 	M.update_chat_selection(sessions.get_session_list())
-	print(sessions.get_session_list())
 	M.answer_popup.border:set_text("top", "New chat", "center")
 end, { desc = "[H]elp from llama in [N]ew chat" })
 
@@ -191,12 +192,12 @@ function M.full_ask_question(question)
 end
 
 M.question_input:map("n", "<Esc>", function()
-	M.layout:unmount()
+	M.layout:hide()
 	M.is_displaying_w = false
 end, { noremap = true })
 
 function M.force_show_chat_window()
-	M.layout:mount()()
+	M.layout:show()
 	M.is_displaying_w = true
 end
 
@@ -205,9 +206,12 @@ function M.toggle_chat_window()
 		M.is_displaying_w = false
 		M.layout:hide()
 	else
-		M.layout:mount()
-		LLM.start_new_ask_session()
-		M.update_chat_selection(sessions.get_session_list())
+		M.layout:show()
+		-- start new session if this is the first time
+		if sessions.get_active() == nil then
+			LLM.start_new_ask_session()
+			M.update_chat_selection(sessions.get_session_list())
+		end
 		M.is_displaying_w = true
 	end
 end
